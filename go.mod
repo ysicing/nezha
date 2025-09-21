@@ -27,10 +27,6 @@ require (
 	github.com/knadh/koanf/providers/env v1.0.0
 	github.com/knadh/koanf/providers/file v1.1.2
 	github.com/knadh/koanf/v2 v2.1.2
-	github.com/libdns/cloudflare v0.1.1
-	github.com/libdns/libdns v0.2.2
-	github.com/miekg/dns v1.1.62
-	github.com/nezhahq/libdns-tencentcloud v0.0.0-20241029120103-889957240fff
 	github.com/nezhahq/service v0.0.0-20240704142721-eba37f9cc709
 	github.com/nicksnyder/go-i18n/v2 v2.4.0
 	github.com/ory/graceful v0.1.3
@@ -122,7 +118,6 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
-	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect

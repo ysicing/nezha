@@ -14,15 +14,12 @@ import (
 	"code.cloudfoundry.org/bytefmt"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
-	"github.com/hashicorp/go-uuid"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 
 	"github.com/naiba/nezha/model"
 	"github.com/naiba/nezha/pkg/mygin"
 	"github.com/naiba/nezha/pkg/utils"
-	"github.com/naiba/nezha/proto"
 	"github.com/naiba/nezha/resource"
-	"github.com/naiba/nezha/service/rpc"
 	"github.com/naiba/nezha/service/singleton"
 )
 
@@ -33,7 +30,6 @@ func ServeWeb(port uint) *http.Server {
 		gin.SetMode(gin.DebugMode)
 		pprof.Register(r)
 	}
-	r.Use(natGateway)
 	tmpl := template.New("").Funcs(funcMap)
 	var err error
 	tmpl, err = tmpl.ParseFS(resource.TemplateFS, "template/**/*.html")
@@ -283,63 +279,3 @@ var funcMap = template.FuncMap{
 	},
 }
 
-func natGateway(c *gin.Context) {
-	natConfig := singleton.GetNATConfigByDomain(c.Request.Host)
-	if natConfig == nil {
-		return
-	}
-
-	singleton.ServerLock.RLock()
-	server := singleton.ServerList[natConfig.ServerID]
-	singleton.ServerLock.RUnlock()
-	if server == nil || server.TaskStream == nil {
-		c.Writer.WriteString("server not found or not connected")
-		c.Abort()
-		return
-	}
-
-	streamId, err := uuid.GenerateUUID()
-	if err != nil {
-		c.Writer.WriteString(fmt.Sprintf("stream id error: %v", err))
-		c.Abort()
-		return
-	}
-
-	rpc.NezhaHandlerSingleton.CreateStream(streamId)
-	defer rpc.NezhaHandlerSingleton.CloseStream(streamId)
-
-	taskData, err := utils.Json.Marshal(model.TaskNAT{
-		StreamID: streamId,
-		Host:     natConfig.Host,
-	})
-	if err != nil {
-		c.Writer.WriteString(fmt.Sprintf("task data error: %v", err))
-		c.Abort()
-		return
-	}
-
-	if err := server.TaskStream.Send(&proto.Task{
-		Type: model.TaskTypeNAT,
-		Data: string(taskData),
-	}); err != nil {
-		c.Writer.WriteString(fmt.Sprintf("send task error: %v", err))
-		c.Abort()
-		return
-	}
-
-	w, err := utils.NewRequestWrapper(c.Request, c.Writer)
-	if err != nil {
-		c.Writer.WriteString(fmt.Sprintf("request wrapper error: %v", err))
-		c.Abort()
-		return
-	}
-
-	if err := rpc.NezhaHandlerSingleton.UserConnected(streamId, w); err != nil {
-		c.Writer.WriteString(fmt.Sprintf("user connected error: %v", err))
-		c.Abort()
-		return
-	}
-
-	rpc.NezhaHandlerSingleton.StartStream(streamId, time.Second*10)
-	c.Abort()
-}
