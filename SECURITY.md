@@ -2,8 +2,8 @@
 
 ## Supported Versions
 
-Code in `master` branch.
+Code in `next` branch.
 
 ## Reporting a Vulnerability
 
-Thank you for your contribution to open source security, please email hi@nai.ba with details of the vulnerability.
+Thank you for your contribution to open source security, please email ysicing@12306.work with details of the vulnerability.

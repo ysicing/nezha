@@ -3,7 +3,7 @@ name: Run Tests
 on:
   push:
     branches:
-      - master
+      - next
     paths:
       - "**.go"
       - "go.mod"
@@ -12,7 +12,7 @@ on:
       - ".github/workflows/test.yml"
   pull_request:
     branches:
-      - master
+      - next
 
 jobs:
   tests:
@@ -20,24 +20,20 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu, windows, macos]
-        
     runs-on: ${{ matrix.os }}-latest
     env:
       GO111MODULE: on
     steps:
       - uses: actions/checkout@v4
-        
       - uses: actions/setup-go@v5
         with:
           go-version: "1.23.x"
-          
+          check-latest: true
       - name: Unit test
         run: |
           go test -v ./...
-          
       - name: Build test
         run: go build -v ./cmd/dashboard
-          
       - name: Run Gosec Security Scanner
         if: runner.os == 'Linux'
         uses: securego/gosec@master
