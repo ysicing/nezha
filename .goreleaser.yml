@@ -3,7 +3,8 @@ before:
   hooks:
     - go mod tidy -v
 builds:
-  - id: linux_arm64
+  # Dashboard builds
+  - id: dashboard_linux_arm64
     env:
       - CGO_ENABLED=1
       - CC=aarch64-linux-gnu-gcc
@@ -19,7 +20,7 @@ builds:
       - arm64
     main: ./cmd/dashboard
     binary: dashboard-{{ .Os }}-{{ .Arch }}
-  - id: linux_amd64
+  - id: dashboard_linux_amd64
     env:
       - CGO_ENABLED=1
       - CC=x86_64-linux-gnu-gcc
@@ -35,7 +36,7 @@ builds:
       - amd64
     main: ./cmd/dashboard
     binary: dashboard-{{ .Os }}-{{ .Arch }}
-  - id: linux_s390x
+  - id: dashboard_linux_s390x
     env:
       - CGO_ENABLED=1
       - CC=s390x-linux-gnu-gcc
@@ -51,7 +52,7 @@ builds:
       - s390x
     main: ./cmd/dashboard
     binary: dashboard-{{ .Os }}-{{ .Arch }}
-  - id: windows_amd64
+  - id: dashboard_windows_amd64
     env:
       - CGO_ENABLED=1
       - CC=x86_64-w64-mingw32-gcc
@@ -67,5 +68,32 @@ builds:
       - amd64
     main: ./cmd/dashboard
     binary: dashboard-{{ .Os }}-{{ .Arch }}
+  # Agent builds
+  - id: agent_universal
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.arch={{.Arch}}
+    goos:
+      - linux
+      - windows
+      - freebsd
+      - darwin
+    goarch:
+      - arm
+      - arm64
+      - 386
+      - amd64
+      - mips
+      - mipsle
+      - s390x
+      - riscv64
+    gomips:
+      - softfloat
+    ignore:
+      - goos: windows
+        goarch: arm
+    main: ./cmd/agent
+    binary: nezha-agent
 snapshot:
-  version_template: "dashboard"
+  version_template: "{{ .Tag }}-next"
