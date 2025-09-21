@@ -30,7 +30,7 @@ jobs:
       tag_name: ${{ steps.extract_branch.outputs.tag }}
     steps:
       - run: git config --global --add safe.directory /__w/nezha/nezha
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Fetch IPInfo GeoIP Database
         if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
@@ -112,7 +112,7 @@ jobs:
     needs: build
     name: Release Docker images
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
