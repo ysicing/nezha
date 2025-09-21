@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/jinzhu/copier"
-
-	"github.com/robfig/cron/v3"
-
 	"github.com/naiba/nezha/model"
 	pb "github.com/naiba/nezha/proto"
+
+	"github.com/jinzhu/copier"
+	"github.com/robfig/cron/v3"
 )
 
 var (

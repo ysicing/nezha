@@ -8,19 +8,19 @@ import (
 
 	"github.com/naiba/nezha/pkg/utils"
 	pb "github.com/naiba/nezha/proto"
+
 	"gorm.io/gorm"
 )
 
 type Server struct {
 	Common
 	Name         string
-	Tag          string   // 分组名
-	Secret       string   `gorm:"uniqueIndex" json:"-"`
-	Note         string   `json:"-"`                    // 管理员可见备注
-	PublicNote   string   `json:"PublicNote,omitempty"` // 公开备注
-	DisplayIndex int      // 展示排序，越大越靠前
-	HideForGuest bool     // 对游客隐藏
-
+	Tag          string // 分组名
+	Secret       string `gorm:"uniqueIndex" json:"-"`
+	Note         string `json:"-"`                    // 管理员可见备注
+	PublicNote   string `json:"PublicNote,omitempty"` // 公开备注
+	DisplayIndex int    // 展示排序，越大越靠前
+	HideForGuest bool   // 对游客隐藏
 
 	Host       *Host      `gorm:"-"`
 	State      *HostState `gorm:"-"`

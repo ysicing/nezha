@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TLS/UTLS transport layer customization
 - File manager (FM) functionality for remote file operations
 - Agent authentication and configuration management (AuthHandler, AgentConfig)
+- CLAUDE.md file with comprehensive project guidance for AI assistants
+- Unit test for secureUnzip function to verify path traversal protection
 
 ### Changed
 - Unified build configuration in .goreleaser.yml to support both dashboard and agent builds
@@ -26,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated import paths from github.com/nezhahq/agent to github.com/naiba/nezha
 - Enhanced go.mod with agent-specific dependencies
 - Updated .gitignore to include agent and dashboard binaries
+- HTTP3 client configuration to use http3.Transport API with TLS 1.2 minimum version
+- Enhanced secureUnzip function with robust path traversal prevention using path.Clean and filepath.Rel
 
 ### Removed
 - **完全移除内网穿透(NAT)功能**：
@@ -49,6 +53,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resolved package naming conflicts between agent and dashboard models
 - Eliminated duplicate TaskType constants and related structures
 - Fixed import path inconsistencies across merged codebase
+- Fixed missing 'strings' import in cmd/dashboard/controller/common_page.go
+- Corrected path traversal validation logic in Windows ZIP extraction (pkg/pty/pty_windows.go)
+- Enhanced WebSocket origin checking with proper URL parsing and host comparison
 
 ### Security
 - **修复全部13个安全漏洞** (100%覆盖率)：
@@ -72,6 +79,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - github.com/cloudflare/circl: v1.3.7 → v1.6.1
   - github.com/go-jose/go-jose/v4: v4.0.2 → v4.0.5
   - github.com/go-viper/mapstructure/v2: v2.2.1 → v2.4.0
+  - github.com/quic-go/quic-go: v0.40.1 → v0.54.0 (修复2个安全漏洞)
+- **路径遍历攻击防护**：
+  - 移除有漏洞的 github.com/artdarek/go-unzip 依赖
+  - 实现自定义 secureUnzip 函数，采用多层安全验证
+  - 防护措施包括：拒绝 ".." 路径、拒绝绝对路径、路径规范化验证
+- **传输层安全增强**：
+  - HTTP3 客户端强制 TLS 1.2 最低版本要求
+  - 添加安全的 cookie 设置（Secure, HttpOnly, SameSite）
 
 ### Technical Details
 - Successfully merged nezhahq/agent v0-final branch
@@ -81,3 +96,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 33 files changed with 3,893 additions and 17 deletions
 - **代码简化**：移除内网穿透和动态DNS功能后，代码库更加专注于核心监控功能
 - **编译验证**：确保 dashboard 和 agent 组件编译无错误
+- **代码审查**：使用 Codex (GPT-5) 进行安全修复验证
+- **测试覆盖**：添加路径遍历防护的单元测试

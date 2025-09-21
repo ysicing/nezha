@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gin-gonic/gin"
-	"github.com/nicksnyder/go-i18n/v2/i18n"
-
 	"github.com/naiba/nezha/model"
 	"github.com/naiba/nezha/service/singleton"
+
+	"github.com/gin-gonic/gin"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
 var adminPage = map[string]bool{

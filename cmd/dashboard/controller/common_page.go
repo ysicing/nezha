@@ -4,16 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
-
-	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
-	"github.com/hashicorp/go-uuid"
-	"github.com/jinzhu/copier"
-	"github.com/nicksnyder/go-i18n/v2/i18n"
-	"golang.org/x/crypto/bcrypt"
-	"golang.org/x/sync/singleflight"
 
 	"github.com/naiba/nezha/model"
 	"github.com/naiba/nezha/pkg/mygin"
@@ -22,6 +16,14 @@ import (
 	"github.com/naiba/nezha/proto"
 	"github.com/naiba/nezha/service/rpc"
 	"github.com/naiba/nezha/service/singleton"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
+	"github.com/hashicorp/go-uuid"
+	"github.com/jinzhu/copier"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/sync/singleflight"
 )
 
 type commonPage struct {
@@ -75,7 +77,17 @@ func (p *commonPage) issueViewPassword(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	c.SetCookie(singleton.Conf.Site.CookieName+"-vp", string(hash), 60*60*24, "", "", false, false)
+	// Set secure view-password cookie
+	secure := c.Request.TLS != nil || strings.EqualFold(c.Request.Header.Get("X-Forwarded-Proto"), "https")
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     singleton.Conf.Site.CookieName + "-vp",
+		Value:    string(hash),
+		Path:     "/",
+		MaxAge:   60 * 60 * 24,
+		Secure:   secure,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
 	c.Redirect(http.StatusFound, c.Request.Referer())
 }
 
@@ -263,6 +275,17 @@ func (cp *commonPage) home(c *gin.Context) {
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  32768,
 	WriteBufferSize: 32768,
+	CheckOrigin: func(r *http.Request) bool {
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			return true
+		}
+		u, err := url.Parse(origin)
+		if err != nil {
+			return false
+		}
+		return strings.EqualFold(u.Host, r.Host)
+	},
 }
 
 type Data struct {
@@ -306,6 +329,17 @@ func (cp *commonPage) ws(c *gin.Context) {
 }
 
 func (cp *commonPage) terminal(c *gin.Context) {
+	// Require authenticated user
+	if _, authorized := c.Get(model.CtxKeyAuthorizedUser); !authorized {
+		mygin.ShowErrorPage(c, mygin.ErrInfo{
+			Code:  http.StatusForbidden,
+			Title: "无权访问",
+			Msg:   "用户未登录",
+			Link:  "/login",
+			Btn:   "去登录",
+		}, true)
+		return
+	}
 	streamId := c.Param("id")
 	if _, err := rpc.NezhaHandlerSingleton.GetStream(streamId); err != nil {
 		mygin.ShowErrorPage(c, mygin.ErrInfo{
@@ -436,6 +470,17 @@ func (cp *commonPage) createTerminal(c *gin.Context) {
 }
 
 func (cp *commonPage) fm(c *gin.Context) {
+	// Require authenticated user
+	if _, authorized := c.Get(model.CtxKeyAuthorizedUser); !authorized {
+		mygin.ShowErrorPage(c, mygin.ErrInfo{
+			Code:  http.StatusForbidden,
+			Title: "无权访问",
+			Msg:   "用户未登录",
+			Link:  "/login",
+			Btn:   "去登录",
+		}, true)
+		return
+	}
 	streamId := c.Param("id")
 	if _, err := rpc.NezhaHandlerSingleton.GetStream(streamId); err != nil {
 		mygin.ShowErrorPage(c, mygin.ErrInfo{

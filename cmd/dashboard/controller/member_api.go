@@ -10,16 +10,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/copier"
-	"gorm.io/gorm"
-
 	"github.com/naiba/nezha/model"
 	"github.com/naiba/nezha/pkg/mygin"
 	"github.com/naiba/nezha/pkg/utils"
 	"github.com/naiba/nezha/proto"
 	"github.com/naiba/nezha/resource"
 	"github.com/naiba/nezha/service/singleton"
+
+	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/copier"
+	"gorm.io/gorm"
 )
 
 type memberAPI struct {
@@ -293,16 +293,15 @@ func (ma *memberAPI) searchTask(c *gin.Context) {
 	})
 }
 
-
 type serverForm struct {
-	ID              uint64
-	Name            string `binding:"required"`
-	DisplayIndex    int
-	Secret          string
-	Tag             string
-	Note            string
-	PublicNote      string
-	HideForGuest    string
+	ID           uint64
+	Name         string `binding:"required"`
+	DisplayIndex int
+	Secret       string
+	Tag          string
+	Note         string
+	PublicNote   string
+	HideForGuest string
 }
 
 func (ma *memberAPI) addOrEditServer(c *gin.Context) {
@@ -729,8 +728,6 @@ func (ma *memberAPI) addOrEditNotification(c *gin.Context) {
 		Code: http.StatusOK,
 	})
 }
-
-
 
 type alertRuleForm struct {
 	ID                     uint64

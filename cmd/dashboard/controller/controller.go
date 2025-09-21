@@ -11,16 +11,16 @@ import (
 	"strings"
 	"time"
 
-	"code.cloudfoundry.org/bytefmt"
-	"github.com/gin-contrib/pprof"
-	"github.com/gin-gonic/gin"
-	"github.com/nicksnyder/go-i18n/v2/i18n"
-
 	"github.com/naiba/nezha/model"
 	"github.com/naiba/nezha/pkg/mygin"
 	"github.com/naiba/nezha/pkg/utils"
 	"github.com/naiba/nezha/resource"
 	"github.com/naiba/nezha/service/singleton"
+
+	"code.cloudfoundry.org/bytefmt"
+	"github.com/gin-contrib/pprof"
+	"github.com/gin-gonic/gin"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
 func ServeWeb(port uint) *http.Server {
@@ -278,4 +278,3 @@ var funcMap = template.FuncMap{
 		return singleton.StatusCodeToString(singleton.GetStatusCode(val))
 	},
 }
-

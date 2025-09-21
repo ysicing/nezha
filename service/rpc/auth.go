@@ -3,11 +3,11 @@ package rpc
 import (
 	"context"
 
+	"github.com/naiba/nezha/service/singleton"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-
-	"github.com/naiba/nezha/service/singleton"
 )
 
 type authHandler struct {

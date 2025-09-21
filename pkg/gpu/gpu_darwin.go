@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/ebitengine/purego"
-
 	"github.com/naiba/nezha/pkg/util"
+
+	"github.com/ebitengine/purego"
 )
 
 type (

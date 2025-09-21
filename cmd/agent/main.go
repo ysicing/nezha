@@ -18,6 +18,15 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/naiba/nezha/model"
+	fm "github.com/naiba/nezha/pkg/fm"
+	"github.com/naiba/nezha/pkg/monitor"
+	"github.com/naiba/nezha/pkg/processgroup"
+	"github.com/naiba/nezha/pkg/pty"
+	"github.com/naiba/nezha/pkg/util"
+	utlsx "github.com/naiba/nezha/pkg/utls"
+	pb "github.com/naiba/nezha/proto"
+
 	"github.com/ebi-yade/altsvc-go"
 	"github.com/nezhahq/service"
 	ping "github.com/prometheus-community/pro-bing"
@@ -29,15 +38,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/resolver"
-
-	"github.com/naiba/nezha/model"
-	fm "github.com/naiba/nezha/pkg/fm"
-	"github.com/naiba/nezha/pkg/monitor"
-	"github.com/naiba/nezha/pkg/processgroup"
-	"github.com/naiba/nezha/pkg/pty"
-	"github.com/naiba/nezha/pkg/util"
-	utlsx "github.com/naiba/nezha/pkg/utls"
-	pb "github.com/naiba/nezha/proto"
 )
 
 // Agent 运行时参数。如需添加新参数，记得同时在 service.go 中添加
@@ -90,7 +90,7 @@ var (
 			return http.ErrUseLastResponse
 		},
 		Timeout:   time.Second * 30,
-		Transport: &http3.RoundTripper{},
+		Transport: &http3.Transport{TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12}},
 	}
 
 	hostStatus = new(atomic.Bool)
@@ -768,7 +768,6 @@ func handleTerminalTask(task *pb.Task) {
 		}
 	}
 }
-
 
 func handleFMTask(task *pb.Task) {
 	if agentCliParam.DisableCommandExecute {

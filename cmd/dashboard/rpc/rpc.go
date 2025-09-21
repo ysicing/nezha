@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"net"
 
-	"google.golang.org/grpc"
-
 	"github.com/naiba/nezha/model"
 	pb "github.com/naiba/nezha/proto"
 	rpcService "github.com/naiba/nezha/service/rpc"
 	"github.com/naiba/nezha/service/singleton"
+
+	"google.golang.org/grpc"
 )
 
 func ServeRPC(port uint) {

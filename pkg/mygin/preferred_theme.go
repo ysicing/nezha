@@ -3,10 +3,11 @@ package mygin
 import (
 	"fmt"
 
-	"github.com/gin-gonic/gin"
 	"github.com/naiba/nezha/model"
 	"github.com/naiba/nezha/pkg/utils"
 	"github.com/naiba/nezha/service/singleton"
+
+	"github.com/gin-gonic/gin"
 )
 
 func PreferredTheme(c *gin.Context) {

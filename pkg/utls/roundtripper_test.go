@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"testing"
 
-	utls "github.com/refraction-networking/utls"
-
 	"github.com/naiba/nezha/pkg/util"
 	utlsx "github.com/naiba/nezha/pkg/utls"
+
+	utls "github.com/refraction-networking/utls"
 )
 
 const url = "https://www.patreon.com/login"

@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/naiba/nezha/model"
+
 	"github.com/jinzhu/copier"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
-
-	"github.com/naiba/nezha/model"
 )
 
 const (

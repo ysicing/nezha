@@ -37,5 +37,5 @@ func (c *AgentConfig) Save() error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(c.v.ConfigFileUsed(), data, os.ModePerm)
+	return os.WriteFile(c.v.ConfigFileUsed(), data, 0600)
 }

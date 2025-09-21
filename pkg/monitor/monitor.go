@@ -11,6 +11,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/naiba/nezha/model"
+	"github.com/naiba/nezha/pkg/gpu"
+	gpustat "github.com/naiba/nezha/pkg/gpu/stat"
+	"github.com/naiba/nezha/pkg/util"
+
 	"github.com/dean2021/goss"
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/disk"
@@ -20,11 +25,6 @@ import (
 	"github.com/shirou/gopsutil/v4/net"
 	"github.com/shirou/gopsutil/v4/process"
 	"github.com/shirou/gopsutil/v4/sensors"
-
-	"github.com/naiba/nezha/model"
-	"github.com/naiba/nezha/pkg/gpu"
-	gpustat "github.com/naiba/nezha/pkg/gpu/stat"
-	"github.com/naiba/nezha/pkg/util"
 )
 
 var (

@@ -32,7 +32,7 @@ type _httpTransport struct {
 
 func httpTransport(conf _httpTransport) *http.Transport {
 	return &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: conf.SkipVerifySSL},
+		TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: conf.SkipVerifySSL},
 		Proxy:           http.ProxyFromEnvironment,
 	}
 }

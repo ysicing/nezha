@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nicksnyder/go-i18n/v2/i18n"
-
 	"github.com/naiba/nezha/model"
 	pb "github.com/naiba/nezha/proto"
+
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
 const (

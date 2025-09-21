@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/robfig/cron/v3"
-	"gorm.io/gorm"
-
 	"github.com/naiba/nezha/pkg/utils"
 	pb "github.com/naiba/nezha/proto"
+
+	"github.com/robfig/cron/v3"
+	"gorm.io/gorm"
 )
 
 const (
@@ -28,7 +28,6 @@ const (
 type TerminalTask struct {
 	StreamID string
 }
-
 
 type TaskFM struct {
 	StreamID string

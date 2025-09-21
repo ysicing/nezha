@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"gorm.io/gorm"
-
 	"github.com/naiba/nezha/pkg/utils"
+
+	"gorm.io/gorm"
 )
 
 const (

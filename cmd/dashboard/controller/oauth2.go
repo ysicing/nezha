@@ -9,17 +9,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/naiba/nezha/pkg/oidc/cloudflare"
-	myOidc "github.com/naiba/nezha/pkg/oidc/general"
-
-	"code.gitea.io/sdk/gitea"
-	"github.com/gin-gonic/gin"
-	GitHubAPI "github.com/google/go-github/v47/github"
 	"github.com/naiba/nezha/model"
 	"github.com/naiba/nezha/pkg/mygin"
+	"github.com/naiba/nezha/pkg/oidc/cloudflare"
+	myOidc "github.com/naiba/nezha/pkg/oidc/general"
 	"github.com/naiba/nezha/pkg/utils"
 	"github.com/naiba/nezha/service/singleton"
+
+	"code.gitea.io/sdk/gitea"
+	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/gin-gonic/gin"
+	GitHubAPI "github.com/google/go-github/v47/github"
 	"github.com/patrickmn/go-cache"
 	"github.com/xanzy/go-gitlab"
 	"golang.org/x/oauth2"
@@ -142,7 +142,17 @@ func (oa *oauth2controller) login(c *gin.Context) {
 	state, stateKey := randomString[:16], randomString[16:]
 	singleton.Cache.Set(fmt.Sprintf("%s%s", model.CacheKeyOauth2State, stateKey), state, cache.DefaultExpiration)
 	url := oa.getCommonOauth2Config(c).AuthCodeURL(state, oauth2.AccessTypeOnline)
-	c.SetCookie(singleton.Conf.Site.CookieName+"-sk", stateKey, 60*5, "", "", false, false)
+	// Set secure cookie for OAuth state key
+	secure := c.Request.TLS != nil || strings.EqualFold(c.Request.Header.Get("X-Forwarded-Proto"), "https")
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     singleton.Conf.Site.CookieName + "-sk",
+		Value:    stateKey,
+		Path:     "/",
+		MaxAge:   60 * 5,
+		Secure:   secure,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
 	c.HTML(http.StatusOK, "dashboard-"+singleton.Conf.Site.DashboardTheme+"/redirect", mygin.CommonEnvironment(c, gin.H{
 		"URL": url,
 	}))
@@ -276,7 +286,17 @@ func (oa *oauth2controller) callback(c *gin.Context) {
 	}
 	user.TokenExpired = time.Now().AddDate(0, 2, 0)
 	singleton.DB.Save(&user)
-	c.SetCookie(singleton.Conf.Site.CookieName, user.Token, 60*60*24, "", "", false, false)
+	// Issue secure session cookie
+	secure := c.Request.TLS != nil || strings.EqualFold(c.Request.Header.Get("X-Forwarded-Proto"), "https")
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     singleton.Conf.Site.CookieName,
+		Value:    user.Token,
+		Path:     "/",
+		MaxAge:   60 * 60 * 24,
+		Secure:   secure,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
 	c.HTML(http.StatusOK, "dashboard-"+singleton.Conf.Site.DashboardTheme+"/redirect", mygin.CommonEnvironment(c, gin.H{
 		"URL": "/",
 	}))

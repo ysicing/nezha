@@ -5,10 +5,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
-
 	"github.com/naiba/nezha/model"
 	"github.com/naiba/nezha/service/singleton"
+
+	"github.com/gin-gonic/gin"
 )
 
 type AuthorizeOption struct {

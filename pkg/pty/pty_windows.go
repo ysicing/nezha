@@ -3,18 +3,20 @@
 package pty
 
 import (
+	"archive/zip"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
 	"strconv"
+	"strings"
 
 	"github.com/UserExistsError/conpty"
-	"github.com/artdarek/go-unzip"
 	"github.com/iamacarpet/go-winpty"
 	"github.com/shirou/gopsutil/v4/host"
 )
@@ -54,6 +56,86 @@ func VersionCheck() bool {
 	return false
 }
 
+// secureUnzip 安全解压ZIP文件，防止路径遍历攻击
+func secureUnzip(src, dest string) error {
+	r, err := zip.OpenReader(src)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	err = os.MkdirAll(dest, 0755)
+	if err != nil {
+		return err
+	}
+
+	// Precompute absolute destination for robust containment checks
+	absDest, err := filepath.Abs(dest)
+	if err != nil {
+		return err
+	}
+
+	extractAndWriteFile := func(f *zip.File) error {
+		// Normalize ZIP entry name using forward-slash semantics, then
+		// verify it doesn't escape the destination directory.
+		// Use the "path" package since ZIP format uses '/'.
+		cleaned := path.Clean(f.Name)
+
+		// Reject absolute paths and any attempts to traverse up.
+		if cleaned == "." || cleaned == "" || strings.HasPrefix(cleaned, "../") || cleaned == ".." || path.IsAbs(cleaned) {
+			return fmt.Errorf("invalid file path: %s", f.Name)
+		}
+
+		// Convert to OS-specific path and join with destination.
+		joined := filepath.Join(absDest, filepath.FromSlash(cleaned))
+
+		// Ensure the final absolute path is within absDest to avoid Zip Slip.
+		absTarget, err := filepath.Abs(joined)
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(absDest, absTarget)
+		if err != nil {
+			return err
+		}
+		if rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+			return fmt.Errorf("invalid file path traversal: %s", f.Name)
+		}
+
+		if f.FileInfo().IsDir() {
+			return os.MkdirAll(absTarget, f.FileInfo().Mode())
+		}
+
+		if err := os.MkdirAll(filepath.Dir(absTarget), 0755); err != nil {
+			return err
+		}
+
+		fileReader, err := f.Open()
+		if err != nil {
+			return err
+		}
+		defer fileReader.Close()
+
+		targetFile, err := os.OpenFile(absTarget, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.FileInfo().Mode())
+		if err != nil {
+			return err
+		}
+		defer targetFile.Close()
+
+		_, err = io.Copy(targetFile, fileReader)
+		return err
+	}
+
+	for _, f := range r.File {
+		err := extractAndWriteFile(f)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func DownloadDependency() error {
 	if !isWin10 {
 		executablePath, err := getExecutableFilePath()
@@ -82,7 +164,7 @@ func DownloadDependency() error {
 		if err := os.WriteFile("./wintty.zip", content, os.FileMode(0777)); err != nil {
 			return fmt.Errorf("winpty 写入失败: %v", err)
 		}
-		if err := unzip.New("./wintty.zip", "./wintty").Extract(); err != nil {
+		if err := secureUnzip("./wintty.zip", "./wintty"); err != nil {
 			return fmt.Errorf("winpty 解压失败: %v", err)
 		}
 		arch := "x64"

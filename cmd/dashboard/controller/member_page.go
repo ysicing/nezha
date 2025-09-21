@@ -3,10 +3,11 @@ package controller
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/naiba/nezha/model"
 	"github.com/naiba/nezha/pkg/mygin"
 	"github.com/naiba/nezha/service/singleton"
+
+	"github.com/gin-gonic/gin"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
@@ -76,8 +77,6 @@ func (mp *memberPage) notification(c *gin.Context) {
 		"AlertRules":    ar,
 	}))
 }
-
-
 
 func (mp *memberPage) setting(c *gin.Context) {
 	c.HTML(http.StatusOK, "dashboard-"+singleton.Conf.Site.DashboardTheme+"/setting", mygin.CommonEnvironment(c, gin.H{

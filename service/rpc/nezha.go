@@ -7,15 +7,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/naiba/nezha/model"
 	"github.com/naiba/nezha/pkg/geoip"
 	"github.com/naiba/nezha/pkg/grpcx"
+	pb "github.com/naiba/nezha/proto"
+	"github.com/naiba/nezha/service/singleton"
 
 	"github.com/jinzhu/copier"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
-
-	"github.com/naiba/nezha/model"
-	pb "github.com/naiba/nezha/proto"
-	"github.com/naiba/nezha/service/singleton"
 )
 
 var NezhaHandlerSingleton *NezhaHandler
@@ -129,7 +128,6 @@ func (s *NezhaHandler) ReportSystemInfo(c context.Context, r *pb.Host) (*pb.Rece
 	host := model.PB2Host(r)
 	singleton.ServerLock.RLock()
 	defer singleton.ServerLock.RUnlock()
-
 
 	// 发送IP变动通知
 	if singleton.ServerList[clientID].Host != nil && singleton.Conf.EnableIPChangeNotification &&
