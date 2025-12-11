@@ -7,10 +7,7 @@ require (
 	code.gitea.io/sdk/gitea v0.18.0
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/BurntSushi/toml v1.3.2
-	github.com/UserExistsError/conpty v0.1.4
-	github.com/artdarek/go-unzip v1.0.0
 	github.com/coreos/go-oidc/v3 v3.11.0
-	github.com/creack/pty v1.1.17
 	github.com/dean2021/goss v0.0.0-20230129073947-df90431348f1
 	github.com/ebi-yade/altsvc-go v0.1.1
 	github.com/ebitengine/purego v0.9.1
@@ -19,7 +16,6 @@ require (
 	github.com/google/go-github/v47 v47.1.0
 	github.com/gorilla/websocket v1.5.1
 	github.com/hashicorp/go-uuid v1.0.3
-	github.com/iamacarpet/go-winpty v1.0.4
 	github.com/jaypipes/ghw v0.21.1
 	github.com/jinzhu/copier v0.4.0
 	github.com/json-iterator/go v1.1.12

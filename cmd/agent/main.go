@@ -34,7 +34,6 @@ import (
 	fm "github.com/naiba/nezha/pkg/fm"
 	"github.com/naiba/nezha/pkg/monitor"
 	"github.com/naiba/nezha/pkg/processgroup"
-	"github.com/naiba/nezha/pkg/pty"
 	"github.com/naiba/nezha/pkg/util"
 	utlsx "github.com/naiba/nezha/pkg/utls"
 	pb "github.com/naiba/nezha/proto"
@@ -216,28 +215,10 @@ func run() {
 		ClientSecret: agentCliParam.ClientSecret,
 	}
 
-	// 下载远程命令执行需要的终端
-	if !agentCliParam.DisableCommandExecute {
-		go func() {
-			if err := pty.DownloadDependency(); err != nil {
-				printf("pty 下载依赖失败: %v", err)
-			}
-		}()
-	}
 	// 上报服务器信息
 	go reportStateDaemon()
 	// 更新IP信息
 	go monitor.UpdateIP(agentCliParam.UseIPv6CountryCode, agentCliParam.IPReportPeriod)
-
-	// 定时检查更新
-	// if _, err := semver.Parse(version); err == nil && !agentCliParam.DisableAutoUpdate {
-	// 	doSelfUpdate(true)
-	// 	go func() {
-	// 		for range time.Tick(20 * time.Minute) {
-	// 			doSelfUpdate(true)
-	// 		}
-	// 	}()
-	// }
 
 	var err error
 	var conn *grpc.ClientConn
@@ -388,9 +369,6 @@ func doTask(task *pb.Task) {
 		handleCommandTask(task, &result)
 	// case model.TaskTypeUpgrade:
 	// 	handleUpgradeTask(task, &result)
-	case model.TaskTypeTerminalGRPC:
-		handleTerminalTask(task)
-		return
 	case model.TaskTypeReportHostInfo:
 		reportHost()
 		return
@@ -456,37 +434,6 @@ func reportHost() bool {
 
 	return true
 }
-
-// // doSelfUpdate 执行更新检查 如果更新成功则会结束进程
-// func doSelfUpdate(useLocalVersion bool) {
-// 	v := semver.MustParse("0.1.0")
-// 	if useLocalVersion {
-// 		v = semver.MustParse(version)
-// 	}
-// 	printf("检查更新: %v", v)
-// 	var latest *selfupdate.Release
-// 	var err error
-// 	if monitor.CachedCountryCode != "cn" && !agentCliParam.UseGiteeToUpgrade {
-// 		latest, err = selfupdate.UpdateSelf(v, "nezhahq/agent")
-// 	} else {
-// 		latest, err = selfupdate.UpdateSelfGitee(v, "naibahq/agent")
-// 	}
-// 	if err != nil {
-// 		printf("更新失败: %v", err)
-// 		return
-// 	}
-// 	if !latest.Version.Equals(v) {
-// 		printf("已经更新至: %v, 正在结束进程", latest.Version)
-// 		os.Exit(1)
-// 	}
-// }
-
-// func handleUpgradeTask(*pb.Task, *pb.TaskResult) {
-// 	if agentCliParam.DisableForceUpdate {
-// 		return
-// 	}
-// 	doSelfUpdate(false)
-// }
 
 func handleTcpPingTask(task *pb.Task, result *pb.TaskResult) {
 	if agentCliParam.DisableSendQuery {
@@ -687,86 +634,6 @@ func handleCommandTask(task *pb.Task, result *pb.TaskResult) {
 	}
 	pg.Dispose()
 	result.Delay = float32(time.Since(startedAt).Seconds())
-}
-
-type WindowSize struct {
-	Cols uint32
-	Rows uint32
-}
-
-func handleTerminalTask(task *pb.Task) {
-	if agentCliParam.DisableCommandExecute {
-		println("此 Agent 已禁止命令执行")
-		return
-	}
-	var terminal model.TerminalTask
-	err := util.Json.Unmarshal([]byte(task.GetData()), &terminal)
-	if err != nil {
-		printf("Terminal 任务解析错误: %v", err)
-		return
-	}
-
-	remoteIO, err := client.IOStream(context.Background())
-	if err != nil {
-		printf("Terminal IOStream失败: %v", err)
-		return
-	}
-
-	// 发送 StreamID
-	if err := remoteIO.Send(&pb.IOStreamData{Data: append([]byte{
-		0xff, 0x05, 0xff, 0x05,
-	}, []byte(terminal.StreamID)...)}); err != nil {
-		printf("Terminal 发送StreamID失败: %v", err)
-		return
-	}
-
-	tty, err := pty.Start()
-	if err != nil {
-		printf("Terminal pty.Start失败 %v", err)
-		return
-	}
-
-	defer func() {
-		err := tty.Close()
-		errCloseSend := remoteIO.CloseSend()
-		println("terminal exit", terminal.StreamID, err, errCloseSend)
-	}()
-	println("terminal init", terminal.StreamID)
-
-	go func() {
-		for {
-			buf := make([]byte, 10240)
-			read, err := tty.Read(buf)
-			if err != nil {
-				remoteIO.Send(&pb.IOStreamData{Data: []byte(err.Error())})
-				remoteIO.CloseSend()
-				return
-			}
-			remoteIO.Send(&pb.IOStreamData{Data: buf[:read]})
-		}
-	}()
-
-	for {
-		var remoteData *pb.IOStreamData
-		if remoteData, err = remoteIO.Recv(); err != nil {
-			return
-		}
-		if len(remoteData.Data) == 0 {
-			return
-		}
-		switch remoteData.Data[0] {
-		case 0:
-			tty.Write(remoteData.Data[1:])
-		case 1:
-			decoder := util.Json.NewDecoder(strings.NewReader(string(remoteData.Data[1:])))
-			var resizeMessage WindowSize
-			err := decoder.Decode(&resizeMessage)
-			if err != nil {
-				continue
-			}
-			tty.Setsize(resizeMessage.Cols, resizeMessage.Rows)
-		}
-	}
 }
 
 func handleFMTask(task *pb.Task) {
