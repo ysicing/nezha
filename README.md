@@ -4,7 +4,7 @@
   <br>
   <small><i>LOGO designed by <a href="https://xio.ng" target="_blank">熊大</a> .</i></small>
   <br><br>
-<img alt="GitHub release (with filter)" src="https://img.shields.io/github/v/release/naiba/nezha?color=brightgreen&style=for-the-badge&logo=github&label=Dashboard">&nbsp;<img src="https://img.shields.io/github/v/release/nezhahq/agent?color=brightgreen&label=Agent&style=for-the-badge&logo=github">&nbsp;<img src="https://img.shields.io/github/actions/workflow/status/nezhahq/agent/agent.yml?label=Agent%20CI&logo=github&style=for-the-badge">
+<img alt="GitHub release (with filter)" src="https://img.shields.io/github/v/release/naiba/nezha?color=brightgreen&style=for-the-badge&logo=github&label=Release">&nbsp;<img src="https://img.shields.io/github/actions/workflow/status/naiba/nezha/release.yml?label=Build&style=for-the-badge&logo=github">
   <br>
   <br>
   <p>:trollface: <b>Nezha Monitoring: Self-hostable, lightweight, servers and websites monitoring and O&M tool.</b></p>
@@ -15,7 +15,16 @@
 
 \>> Telegram Group: [Nezha Monitoring Global (English Only)](https://t.me/nezhamonitoring_global), [哪吒监控（中文群组）](https://t.me/nezhamonitoring)
 
-\>> [Use Cases | 我们的用户](https://www.google.com/search?q=%22powered+by+Nezha+Monitoring%22+OR+%22powered+by+%E5%93%AA%E5%90%92%E7%9B%91%E6%8E%A7%22) (Google)  
+\>> [Use Cases | 我们的用户](https://www.google.com/search?q=%22powered+by+Nezha+Monitoring%22+OR+%22powered+by+%E5%93%AA%E5%90%92%E7%9B%91%E6%8E%A7%22) (Google)
+
+## Project Structure
+
+This repository contains both the **Nezha Dashboard** (server) and **Nezha Agent** (client):
+
+- **Dashboard** (`cmd/dashboard`): The monitoring server with web UI and management features
+- **Agent** (`cmd/agent`): The lightweight monitoring agent installed on monitored servers
+
+Both components are maintained in a unified codebase for easier maintenance and consistent releases.
 
 ## User Guide
 

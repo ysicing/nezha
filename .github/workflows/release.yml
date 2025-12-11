@@ -6,7 +6,7 @@ on:
       - "v*"
 
 jobs:
-  build:
+  build-dashboard:
     strategy:
       fail-fast: true
       matrix:
@@ -59,10 +59,70 @@ jobs:
           path: |
             ./dist/*/*
 
+  build-agent:
+    strategy:
+      fail-fast: true
+      matrix:
+        goos: [linux, windows, darwin, freebsd]
+        goarch: [amd64, arm64, 386]
+        include:
+          - goos: linux
+            goarch: s390x
+          - goos: linux
+            goarch: riscv64
+          - goos: linux
+            goarch: arm
+          - goos: linux
+            goarch: mips
+            gomips: softfloat
+          - goos: linux
+            goarch: mipsle
+            gomips: softfloat
+          - goos: freebsd
+            goarch: arm
+        exclude:
+          - goos: darwin
+            goarch: 386
+
+    name: Build agent artifacts
+    runs-on: ubuntu-latest
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      GOMIPS: ${{ matrix.gomips }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+
+      - name: Build agent
+        run: |
+          export CGO_ENABLED=0
+          export VERSION=${GITHUB_REF#refs/tags/}
+          go build -o nezha-agent -ldflags="-s -w -X main.version=${VERSION} -X main.arch=${GOARCH}" ./cmd/agent
+
+      - name: Archive
+        run: |
+          mkdir -p dist/agent
+          mv nezha-agent dist/agent/
+          zip -jr dist/nezha-agent_${GOOS}_${GOARCH}.zip dist/agent/*
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nezha-agent_${{ env.GOOS }}_${{ env.GOARCH }}
+          path: |
+            ./dist/nezha-agent_${{ env.GOOS }}_${{ env.GOARCH }}.zip
+
   release:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-    needs: build
+    needs: [build-dashboard, build-agent]
     name: Release
     steps:
       - name: Download artifacts
@@ -72,18 +132,19 @@ jobs:
 
       - name: Archive and compress binaries
         run: |
-          find assets/*/*/* -type f | while read -r file; do
+          # Archive dashboard binaries
+          find assets/dashboard-*/*/*/* -type f 2>/dev/null | while read -r file; do
             chmod +x $file
             dir=$(dirname "$file")
             filename=$(basename "$file")
             fileWithoutExt="${filename%.*}"
             zip -jr "$dir/$fileWithoutExt.zip" "$file"
-          done
+          done || true
 
       - name: Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "assets/*/*/*.zip"
+          artifacts: "assets/*/*/*.zip,assets/nezha-agent_*/*.zip"
           generateReleaseNotes: true
 
       - name: Purge jsdelivr cache
@@ -109,7 +170,7 @@ jobs:
   release-docker:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-    needs: build
+    needs: build-dashboard
     name: Release Docker images
     steps:
       - uses: actions/checkout@v4
