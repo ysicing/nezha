@@ -17,7 +17,6 @@ var adminPage = map[string]bool{
 	"/setting":      true,
 	"/notification": true,
 	"/ddns":         true,
-	"/nat":          true,
 	"/cron":         true,
 	"/api":          true,
 }

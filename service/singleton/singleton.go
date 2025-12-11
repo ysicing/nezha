@@ -37,7 +37,6 @@ func LoadSingleton() {
 	loadServers()       // 加载服务器列表
 	loadCronTasks()     // 加载定时任务
 	loadAPI()
-	initNAT()
 	initDDNS()
 }
 
@@ -65,7 +64,7 @@ func InitDBFromPath(path string) {
 	err = DB.AutoMigrate(model.Server{}, model.User{},
 		model.Notification{}, model.AlertRule{}, model.Monitor{},
 		model.MonitorHistory{}, model.Cron{}, model.Transfer{},
-		model.ApiToken{}, model.NAT{}, model.DDNSProfile{})
+		model.ApiToken{}, model.DDNSProfile{})
 	if err != nil {
 		panic(err)
 	}

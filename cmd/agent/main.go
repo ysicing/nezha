@@ -56,7 +56,6 @@ type AgentCliParam struct {
 	IPReportPeriod        uint32 // 上报IP间隔
 	UseIPv6CountryCode    bool   // 默认优先展示IPv6旗帜
 	UseGiteeToUpgrade     bool   // 强制从Gitee获取更新
-	DisableNat            bool   // 关闭内网穿透
 	DisableSendQuery      bool   // 关闭发送TCP/ICMP/HTTP请求
 }
 
@@ -148,7 +147,6 @@ func init() {
 	agentCmd.PersistentFlags().BoolVar(&agentCliParam.SkipConnectionCount, "skip-conn", false, "不监控连接数")
 	agentCmd.PersistentFlags().BoolVar(&agentCliParam.SkipProcsCount, "skip-procs", false, "不监控进程数")
 	agentCmd.PersistentFlags().BoolVar(&agentCliParam.DisableCommandExecute, "disable-command-execute", false, "禁止在此机器上执行命令")
-	agentCmd.PersistentFlags().BoolVar(&agentCliParam.DisableNat, "disable-nat", false, "禁止此机器内网穿透")
 	agentCmd.PersistentFlags().BoolVar(&agentCliParam.DisableSendQuery, "disable-send-query", false, "禁止此机器发送TCP/ICMP/HTTP请求")
 	agentCmd.PersistentFlags().BoolVar(&agentCliParam.DisableAutoUpdate, "disable-auto-update", false, "禁用自动升级")
 	agentCmd.PersistentFlags().BoolVar(&agentCliParam.DisableForceUpdate, "disable-force-update", false, "禁用强制升级")
@@ -392,9 +390,6 @@ func doTask(task *pb.Task) {
 	// 	handleUpgradeTask(task, &result)
 	case model.TaskTypeTerminalGRPC:
 		handleTerminalTask(task)
-		return
-	case model.TaskTypeNAT:
-		handleNATTask(task)
 		return
 	case model.TaskTypeReportHostInfo:
 		reportHost()
@@ -771,68 +766,6 @@ func handleTerminalTask(task *pb.Task) {
 			}
 			tty.Setsize(resizeMessage.Cols, resizeMessage.Rows)
 		}
-	}
-}
-
-func handleNATTask(task *pb.Task) {
-	if agentCliParam.DisableNat {
-		println("此 Agent 已禁止内网穿透")
-		return
-	}
-
-	var nat model.TaskNAT
-	err := util.Json.Unmarshal([]byte(task.GetData()), &nat)
-	if err != nil {
-		printf("NAT 任务解析错误: %v", err)
-		return
-	}
-
-	remoteIO, err := client.IOStream(context.Background())
-	if err != nil {
-		printf("NAT IOStream失败: %v", err)
-		return
-	}
-
-	// 发送 StreamID
-	if err := remoteIO.Send(&pb.IOStreamData{Data: append([]byte{
-		0xff, 0x05, 0xff, 0x05,
-	}, []byte(nat.StreamID)...)}); err != nil {
-		printf("NAT 发送StreamID失败: %v", err)
-		return
-	}
-
-	conn, err := net.Dial("tcp", nat.Host)
-	if err != nil {
-		printf("NAT Dial %s 失败：%s", nat.Host, err)
-		return
-	}
-
-	defer func() {
-		err := conn.Close()
-		errCloseSend := remoteIO.CloseSend()
-		println("NAT exit", nat.StreamID, err, errCloseSend)
-	}()
-	println("NAT init", nat.StreamID)
-
-	go func() {
-		buf := make([]byte, 10240)
-		for {
-			read, err := conn.Read(buf)
-			if err != nil {
-				remoteIO.Send(&pb.IOStreamData{Data: []byte(err.Error())})
-				remoteIO.CloseSend()
-				return
-			}
-			remoteIO.Send(&pb.IOStreamData{Data: buf[:read]})
-		}
-	}()
-
-	for {
-		var remoteData *pb.IOStreamData
-		if remoteData, err = remoteIO.Recv(); err != nil {
-			return
-		}
-		conn.Write(remoteData.Data)
 	}
 }
 

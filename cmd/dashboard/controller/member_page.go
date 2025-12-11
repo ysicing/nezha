@@ -28,7 +28,6 @@ func (mp *memberPage) serve() {
 	mr.GET("/cron", mp.cron)
 	mr.GET("/notification", mp.notification)
 	mr.GET("/ddns", mp.ddns)
-	mr.GET("/nat", mp.nat)
 	mr.GET("/setting", mp.setting)
 	mr.GET("/api", mp.api)
 }
@@ -87,15 +86,6 @@ func (mp *memberPage) ddns(c *gin.Context) {
 		"DDNS":         data,
 		"ProviderMap":  model.ProviderMap,
 		"ProviderList": model.ProviderList,
-	}))
-}
-
-func (mp *memberPage) nat(c *gin.Context) {
-	var data []model.NAT
-	singleton.DB.Find(&data)
-	c.HTML(http.StatusOK, "dashboard-"+singleton.Conf.Site.DashboardTheme+"/nat", mygin.CommonEnvironment(c, gin.H{
-		"Title": singleton.Localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "NAT"}),
-		"NAT":   data,
 	}))
 }
 
