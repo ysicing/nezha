@@ -3,7 +3,6 @@ package model
 import (
 	"fmt"
 	"html/template"
-	"log"
 	"sync"
 	"time"
 
@@ -21,10 +20,6 @@ type Server struct {
 	PublicNote   string   `json:"PublicNote,omitempty"` // 公开备注
 	DisplayIndex int      // 展示排序，越大越靠前
 	HideForGuest bool     // 对游客隐藏
-	EnableDDNS   bool     // 启用DDNS
-	DDNSProfiles []uint64 `gorm:"-" json:"-"` // DDNS配置
-
-	DDNSProfilesRaw string `gorm:"default:'[]';column:ddns_profiles_raw" json:"-"`
 
 	Host       *Host      `gorm:"-"`
 	State      *HostState `gorm:"-"`
@@ -50,12 +45,6 @@ func (s *Server) CopyFromRunningServer(old *Server) {
 }
 
 func (s *Server) AfterFind(tx *gorm.DB) error {
-	if s.DDNSProfilesRaw != "" {
-		if err := utils.Json.Unmarshal([]byte(s.DDNSProfilesRaw), &s.DDNSProfiles); err != nil {
-			log.Println("NEZHA>> Server.AfterFind:", err)
-			return nil
-		}
-	}
 	return nil
 }
 
@@ -71,7 +60,6 @@ func (s Server) MarshalForDashboard() template.JS {
 	tag, _ := utils.Json.Marshal(s.Tag)
 	note, _ := utils.Json.Marshal(s.Note)
 	secret, _ := utils.Json.Marshal(s.Secret)
-	ddnsProfilesRaw, _ := utils.Json.Marshal(s.DDNSProfilesRaw)
 	publicNote, _ := utils.Json.Marshal(s.PublicNote)
-	return template.JS(fmt.Sprintf(`{"ID":%d,"Name":%s,"Secret":%s,"DisplayIndex":%d,"Tag":%s,"Note":%s,"HideForGuest": %s,"EnableDDNS": %s,"DDNSProfilesRaw": %s,"PublicNote": %s}`, s.ID, name, secret, s.DisplayIndex, tag, note, boolToString(s.HideForGuest), boolToString(s.EnableDDNS), ddnsProfilesRaw, publicNote))
+	return template.JS(fmt.Sprintf(`{"ID":%d,"Name":%s,"Secret":%s,"DisplayIndex":%d,"Tag":%s,"Note":%s,"HideForGuest": %s,"PublicNote": %s}`, s.ID, name, secret, s.DisplayIndex, tag, note, boolToString(s.HideForGuest), publicNote))
 }

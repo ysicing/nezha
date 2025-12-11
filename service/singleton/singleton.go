@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/patrickmn/go-cache"
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 
 	"github.com/naiba/nezha/model"
@@ -37,7 +37,6 @@ func LoadSingleton() {
 	loadServers()       // 加载服务器列表
 	loadCronTasks()     // 加载定时任务
 	loadAPI()
-	initDDNS()
 }
 
 // InitConfigFromPath 从给出的文件路径中加载配置
@@ -64,7 +63,7 @@ func InitDBFromPath(path string) {
 	err = DB.AutoMigrate(model.Server{}, model.User{},
 		model.Notification{}, model.AlertRule{}, model.Monitor{},
 		model.MonitorHistory{}, model.Cron{}, model.Transfer{},
-		model.ApiToken{}, model.DDNSProfile{})
+		model.ApiToken{})
 	if err != nil {
 		panic(err)
 	}

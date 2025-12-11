@@ -15,7 +15,7 @@ import (
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/gin-gonic/gin"
-	GitHubAPI "github.com/google/go-github/v47/github"
+	GitHubAPI "github.com/google/go-github/v80/github"
 	"github.com/naiba/nezha/model"
 	"github.com/naiba/nezha/pkg/mygin"
 	"github.com/naiba/nezha/pkg/utils"

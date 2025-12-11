@@ -3,15 +3,12 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"sync"
 	"time"
 
-	"github.com/naiba/nezha/pkg/ddns"
 	"github.com/naiba/nezha/pkg/geoip"
 	"github.com/naiba/nezha/pkg/grpcx"
-	"github.com/naiba/nezha/pkg/utils"
 
 	"github.com/jinzhu/copier"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -132,22 +129,6 @@ func (s *NezhaHandler) ReportSystemInfo(c context.Context, r *pb.Host) (*pb.Rece
 	host := model.PB2Host(r)
 	singleton.ServerLock.RLock()
 	defer singleton.ServerLock.RUnlock()
-
-	// 检查并更新DDNS
-	if singleton.ServerList[clientID].EnableDDNS && host.IP != "" &&
-		(singleton.ServerList[clientID].Host == nil || singleton.ServerList[clientID].Host.IP != host.IP) {
-		ipv4, ipv6, _ := utils.SplitIPAddr(host.IP)
-		providers, err := singleton.GetDDNSProvidersFromProfiles(singleton.ServerList[clientID].DDNSProfiles, &ddns.IP{Ipv4Addr: ipv4, Ipv6Addr: ipv6})
-		if err == nil {
-			for _, provider := range providers {
-				go func(provider *ddns.Provider) {
-					provider.UpdateDomain(context.Background())
-				}(provider)
-			}
-		} else {
-			log.Printf("NEZHA>> 获取DDNS配置时发生错误: %v", err)
-		}
-	}
 
 	// 发送IP变动通知
 	if singleton.ServerList[clientID].Host != nil && singleton.Conf.EnableIPChangeNotification &&
