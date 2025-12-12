@@ -313,17 +313,35 @@ func (m *MonitorAPIService) GetMonitorHistories(query map[string]any) *MonitorIn
 		for _, history := range monitorHistories {
 			infos, ok := resultMap[history.MonitorID]
 			if !ok {
+				// 安全地获取监控和服务器名称
+				ServiceSentinelShared.monitorsLock.RLock()
+				monitor, monitorExists := ServiceSentinelShared.monitors[history.MonitorID]
+				ServiceSentinelShared.monitorsLock.RUnlock()
+
+				ServerLock.RLock()
+				server, serverExists := ServerList[history.ServerID]
+				ServerLock.RUnlock()
+
+				// 跳过已删除的监控或服务器
+				if !monitorExists || !serverExists {
+					continue
+				}
+
 				infos = &MonitorInfo{
 					MonitorID:   history.MonitorID,
 					ServerID:    history.ServerID,
-					MonitorName: ServiceSentinelShared.monitors[history.MonitorID].Name,
-					ServerName:  ServerList[history.ServerID].Name,
+					MonitorName: monitor.Name,
+					ServerName:  server.Name,
 				}
 				resultMap[history.MonitorID] = infos
 				sortedMonitorIDs = append(sortedMonitorIDs, history.MonitorID)
 			}
-			infos.CreatedAt = append(infos.CreatedAt, history.CreatedAt.Truncate(time.Minute).Unix()*1000)
-			infos.AvgDelay = append(infos.AvgDelay, history.AvgDelay)
+
+			// 只有 infos 存在时才追加数据
+			if infos != nil {
+				infos.CreatedAt = append(infos.CreatedAt, history.CreatedAt.Truncate(time.Minute).Unix()*1000)
+				infos.AvgDelay = append(infos.AvgDelay, history.AvgDelay)
+			}
 		}
 		for _, monitorID := range sortedMonitorIDs {
 			res.Result = append(res.Result, resultMap[monitorID])
