@@ -1,6 +1,6 @@
 module github.com/naiba/nezha
 
-go 1.24.0
+go 1.25.0
 
 require (
 	code.cloudfoundry.org/bytefmt v0.0.0-20240425163905-bcdc1ad063ea
